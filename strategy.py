@@ -121,6 +121,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     pnls = []
     equity_curve = []
     holding_times = []
+    paid_fees = 0
 
     for i in range(len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
@@ -165,6 +166,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
                 total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                paid_fees += total_fee
                 balance += long_pnl + short_pnl - total_fee
 
                 pnls.append(long_pnl + short_pnl)
@@ -176,6 +178,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
                 total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                paid_fees += total_fee
                 balance += long_pnl + short_pnl - total_fee
 
                 pnls.append(long_pnl + short_pnl)
@@ -199,7 +202,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return
+    return (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -245,7 +248,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=10, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=200, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -254,7 +257,7 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
+        profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
 
         print("-----------------------------------")
         print(f"Test proft = {profit:.1f}%")
@@ -265,6 +268,7 @@ if __name__ == "__main__":
         print(f"Average pnl = {avg_pnl:.0f}")
         print(f"Win ratio =  {win_ratio*100:.0f}%")
         print(f"Average holding time =  {avg_holding_time.total_seconds() / 3600:.1f} hours")
+        print(f"Total paid fees = {paid_fees:.1f}")
         print("Best params: ", best_params)
         test_results.append(annualized_return)
 
