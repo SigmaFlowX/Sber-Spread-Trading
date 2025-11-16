@@ -109,7 +109,6 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
     return (balance - initial_balance)/initial_balance * 100
 
-
 def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps,plot=False):
 
     initial_balance = 1000000
@@ -236,11 +235,12 @@ if __name__ == "__main__":
     windows = generate_walkforward_windows(df)
 
     for train_start, train_end, test_start, test_end in windows:
+        print(f"\nПериод: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
         train_df = df.loc[train_start:train_end].copy()
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=100, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=10, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -261,5 +261,9 @@ if __name__ == "__main__":
         print(f"Win ratio =  {win_ratio*100:.0f}%")
         print(f"Average holding time =  {avg_holding_time.total_seconds() / 3600:.1f} hours")
         print("Best params: ", best_params)
+        test_results.append(annualized_return)
+
+    print("------------------------------")
+    print(f"Average annualized return = {sum(test_results)/len(test_results):.1f}%")
 
 
