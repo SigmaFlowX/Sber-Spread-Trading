@@ -54,6 +54,7 @@ def prepare_data_arrays(df, z_window, spread_window):
 @njit()
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
 
+    fee = 0.008/100
     initial_balance = 1000000
     balance = initial_balance
     risk_percent = 10
@@ -98,19 +99,21 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
-                balance += long_pnl + short_pnl
+                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                balance += long_pnl + short_pnl - total_fee
 
             elif pos == -1 and z_score >= 0:
                 pos = 0
 
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
-                balance += long_pnl + short_pnl
+                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                balance += long_pnl + short_pnl - total_fee
 
     return (balance - initial_balance)/initial_balance * 100
 
 def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps,plot=False):
-
+    fee = 0.008 / 100
     initial_balance = 1000000
     balance = initial_balance
     risk_percent = 10
@@ -161,7 +164,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
-                balance += long_pnl + short_pnl
+                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                balance += long_pnl + short_pnl - total_fee
 
                 pnls.append(long_pnl + short_pnl)
                 holding_times.append(time - entry_time)
@@ -171,7 +175,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
-                balance += long_pnl + short_pnl
+                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                balance += long_pnl + short_pnl - total_fee
 
                 pnls.append(long_pnl + short_pnl)
                 holding_times.append(time - entry_time)
