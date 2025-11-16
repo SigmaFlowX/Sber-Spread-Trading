@@ -3,6 +3,7 @@ import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
 from numba import njit
 from dateutil.relativedelta import relativedelta
+import optuna
 
 def open_data():
     df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -43,7 +44,7 @@ def prepare_data_arrays(df, z_window, spread_window):
 
 
 @njit()
-def run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
+def run_strategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
 
     balance = 1000000
     risk_percent = 10
@@ -101,14 +102,13 @@ def run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshol
 
 def objective(trial, df):
     df = df.copy()
-
     z_threshold = trial.suggest_float('z_threshold', 0.5,5)
     z_window = trial.suggest_int('z_window', 5,50)
-    spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
+    spread_window = trial.suggest_int('spread_window', 10,3000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
-    return run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
+    return run_strategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
 
 def generate_walkforward_windows(df, train_months=6, test_months=3):
     windows = []
@@ -130,3 +130,29 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
         current_start = test_start
 
     return windows
+
+
+
+# Numba walk-forward optimization
+test_results = []
+if __name__ == "__main__":
+    df = open_data()
+    windows = generate_walkforward_windows(df)
+
+    for train_start, train_end, test_start, test_end in windows:
+        train_df = df.loc[train_start:train_end].copy()
+        test_df = df.loc[test_start:test_end].copy()
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=100, n_jobs=1)
+
+        best_params = study.best_params
+        z_threshold = best_params['z_threshold']
+        spread_window = best_params['spread_window']
+        z_window = best_params['z_window']
+
+        sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
+        test_balance = run_strategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
+        test_results.append(test_balance)
+
+    print(test_results)
