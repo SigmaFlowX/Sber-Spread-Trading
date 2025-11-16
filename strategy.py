@@ -10,7 +10,7 @@ from datetime import timedelta
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)
 
-def open_data():
+def open_data(since=None):
     df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
     df_sberp = pd.read_csv("data/SBERP10min.csv", parse_dates=["timestamp"], index_col="timestamp")
 
@@ -21,6 +21,9 @@ def open_data():
     df_sberp.rename(columns={'close': 'SBERP'}, inplace=True)
 
     df = pd.concat([df_sber, df_sberp], axis=1).dropna()
+
+    if since is not None:
+        df = df[df.index >= pd.to_datetime(since)]
 
     return df
 
@@ -224,7 +227,6 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
         current_start = test_start
 
     return windows
-
 
 
 # Numba walk-forward optimization
