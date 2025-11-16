@@ -5,6 +5,10 @@ from numba import njit
 from dateutil.relativedelta import relativedelta
 import optuna
 import matplotlib.pyplot as plt
+from datetime import timedelta
+
+
+optuna.logging.set_verbosity(optuna.logging.CRITICAL)
 
 def open_data():
     df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -103,7 +107,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
     return (balance - initial_balance)/initial_balance * 100
 
 
-def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=None,plot=False):
+def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps,plot=False):
 
     initial_balance = 1000000
     balance = initial_balance
@@ -111,12 +115,14 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     pos = 0
     pnls = []
     equity_curve = []
+    holding_times = []
 
     for i in range(len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
         z_score = z_score_arr[i]
+        time = timestamps[i]
 
         if pos == 0:
             if z_score > z_threshold:
@@ -129,6 +135,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 sberp_quantity = sberp_pos_size // sberp_price
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
+
+                entry_time = time
 
 
             elif z_score < -z_threshold:
@@ -143,6 +151,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
 
+                entry_time = time
+
         else:
             if pos == 1 and z_score <= 0:
                 pos = 0
@@ -152,6 +162,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 balance += long_pnl + short_pnl
 
                 pnls.append(long_pnl + short_pnl)
+                holding_times.append(time - entry_time)
 
             elif pos == -1 and z_score >= 0:
                 pos = 0
@@ -161,10 +172,15 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 balance += long_pnl + short_pnl
 
                 pnls.append(long_pnl + short_pnl)
+                holding_times.append(time - entry_time)
 
         equity_curve.append(balance)
 
+    days = (timestamps[-1] - timestamps[0]).days
+    years = days / 365.25
+    annualized_return = ((equity_curve[-1] / initial_balance) ** (1 / years) - 1)*100
 
+    avg_holding_time = sum(holding_times, timedelta(0)) / len(holding_times)
     total_trades = len(pnls)
     max_pnl = max(pnls)
     min_pnl = min(pnls)
@@ -176,7 +192,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio
+    return (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return
 
 def objective(trial, df):
     df = df.copy()
@@ -222,7 +238,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=50, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=100, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -230,12 +246,18 @@ if __name__ == "__main__":
         z_window = best_params['z_window']
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
-        delta = len(test_df.index) - len(sberp_price_arr)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        profit, max_pnl, min_pnl, avg_pnl, win_ratio = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=True)
-        print(f"Test proft = {profit}")
-        print(f"Max_pnl = {max_pnl}")
-        print(f"Min_pnl = {min_pnl}")
-        print(f"Average pnl = {avg_pnl}")
-        print(f"Win ration =  {win_ratio}")
+        profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
+
+        print("-----------------------------------")
+        print(f"Test proft = {profit:.1f}%")
+        print(f"Annualized return = {annualized_return:.1f}%")
+        print(f"Total trades =  {total_trades}")
+        print(f"Max_pnl = {max_pnl:.0f}")
+        print(f"Min_pnl = {min_pnl:.0f}")
+        print(f"Average pnl = {avg_pnl:.0f}")
+        print(f"Win ratio =  {win_ratio*100:.0f}%")
+        print(f"Average holding time =  {avg_holding_time.total_seconds() / 3600:.1f} hours")
+        print("Best params: ", best_params)
+
 
