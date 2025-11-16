@@ -1,9 +1,9 @@
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
+from numba import njit
 
-
-def prepare_data():
+def open_data():
     df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
     df_sberp = pd.read_csv("data/SBERP10min.csv", parse_dates=["timestamp"], index_col="timestamp")
 
@@ -17,7 +17,7 @@ def prepare_data():
 
     return df
 
-def run_srtategy(df, z_threshold, z_window, spread_window):
+def prepare_data_arrays(df, z_window, spread_window):
     df = df.copy()
 
     y = df['SBER']
@@ -37,6 +37,13 @@ def run_srtategy(df, z_threshold, z_window, spread_window):
 
     df = df.dropna()
 
+    return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
+
+
+
+@njit()
+def run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
+
     balance = 1000000
     risk_percent = 10
     pos = 0
@@ -45,11 +52,11 @@ def run_srtategy(df, z_threshold, z_window, spread_window):
     # SPREAD = SBER - a * SBERP - b
     # z > 0 - short a * SBER, long SBERP
     # z < 0 - long a * SBER, short SBERP
-    for row in df.itertuples():
-        sber_price = row.SBER
-        sberp_price = row.SBERP
-        a = row.a
-        z_score = row.z_score
+    for i in range(len(sberp_price_arr)):
+        sber_price = sber_price_arr[i]
+        sberp_price = sberp_price_arr[i]
+        a = a_arr[i]
+        z_score = z_score_arr[i]
 
         if pos == 0:
             if z_score > z_threshold:
@@ -91,6 +98,15 @@ def run_srtategy(df, z_threshold, z_window, spread_window):
 
     return balance
 
+def objective(trial, df):
+    df = df.copy()
 
-data = prepare_data()
-print(run_srtategy(data, 1,10,100))
+    z_threshold = trial.suggest_float('z_threshold', 0.5,5)
+    z_window = trial.suggest_int('z_window', 5,50)
+    spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
+
+    sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
+
+    return run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
+
+
