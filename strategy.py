@@ -2,6 +2,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
 from numba import njit
+from dateutil.relativedelta import relativedelta
 
 def open_data():
     df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -109,4 +110,23 @@ def objective(trial, df):
 
     return run_srtategy(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
 
+def generate_walkforward_windows(df, train_months=6, test_months=3):
+    windows = []
+    start_date = df.index.min()
+    end_date = df.index.max()
 
+    current_start = start_date
+
+    while True:
+        train_start = current_start
+        train_end = train_start + relativedelta(months=train_months)
+        test_start = train_end
+        test_end = test_start + relativedelta(months=test_months)
+
+        if test_end > end_date:
+            break
+
+        windows.append((train_start, train_end, test_start, test_end))
+        current_start = test_start
+
+    return windows
