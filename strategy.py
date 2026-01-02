@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import optuna
 import matplotlib.pyplot as plt
 from datetime import timedelta
+import numpy as np
 
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)
@@ -197,12 +198,25 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     avg_pnl = sum(pnls)/len(pnls)
     winning_trades = sum(1 for x in pnls if x > 0)
     win_ratio = winning_trades/total_trades
+
+    equity = np.array(equity_curve)
+    returns = equity[1:] / equity[:-1] - 1
+    mean_ret = returns.mean()
+    std_ret = returns.std(ddof=1)
+    sharpe_daily = mean_ret / std_ret
+    sharpe_annual = sharpe_daily * np.sqrt(252)
+
+
     if plot:
-        plt.plot(timestamps, equity_curve)
+        plt.figure(figsize=(12, 5))
+        plt.plot(timestamps, equity_curve, linewidth=2)
+        plt.title("Equity curve")
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
         plt.show()
 
 
-    return (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
+    return sharpe_annual ,balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -235,8 +249,6 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
     return windows
 
-
-# Numba walk-forward optimization
 test_results = []
 if __name__ == "__main__":
     df = open_data()
@@ -248,7 +260,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=200, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=50, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -257,11 +269,13 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
+        sharpe,absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
 
         print("-----------------------------------")
-        print(f"Test proft = {profit:.1f}%")
+        print(f"Test profit = {profit:.1f}%")
+        print(f"Test absolute profit = {absolute_profit}")
         print(f"Annualized return = {annualized_return:.1f}%")
+        print(f"Anuualized sharpe =  {sharpe}")
         print(f"Total trades =  {total_trades}")
         print(f"Max_pnl = {max_pnl:.0f}")
         print(f"Min_pnl = {min_pnl:.0f}")
