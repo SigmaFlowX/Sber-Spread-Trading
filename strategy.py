@@ -201,11 +201,11 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
     equity = np.array(equity_curve)
     returns = equity[1:] / equity[:-1] - 1
-    mean_ret = returns.mean()
-    std_ret = returns.std(ddof=1)
-    sharpe_daily = mean_ret / std_ret
-    sharpe_annual = sharpe_daily * np.sqrt(252)
-
+    returns = pd.Series(returns, index=pd.to_datetime(timestamps[1:]))
+    daily_returns = (1 + returns).groupby(returns.index.date).prod() - 1
+    mean = daily_returns.mean()
+    std = daily_returns.std()
+    sharpe_annual = mean/std * 252**0.5
 
     if plot:
         plt.figure(figsize=(12, 5))
@@ -249,18 +249,20 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
     return windows
 
-test_results = []
+
 if __name__ == "__main__":
     df = open_data()
     windows = generate_walkforward_windows(df)
 
+    results = []
+    test_results = []
     for train_start, train_end, test_start, test_end in windows:
-        print(f"\nПериод: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
+        print(f"\nPeriod: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
         train_df = df.loc[train_start:train_end].copy()
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=50, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=200, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -286,7 +288,34 @@ if __name__ == "__main__":
         print("Best params: ", best_params)
         test_results.append(annualized_return)
 
+        results.append({
+            "train_start": train_start.date(),
+            "train_end": train_end.date(),
+            "test_start": test_start.date(),
+            "test_end": test_end.date(),
+            "annualized_return_%": annualized_return,
+            "sharpe": sharpe,
+            "profit_%": profit,
+            "absolute_profit": absolute_profit,
+            "total_trades": total_trades,
+            "win_ratio_%": win_ratio * 100,
+            "avg_holding_hours": avg_holding_time.total_seconds() / 3600,
+            "max_pnl": max_pnl,
+            "min_pnl": min_pnl,
+            "avg_pnl": avg_pnl,
+            "paid_fees": paid_fees,
+            "z_threshold": z_threshold,
+            "spread_window": spread_window,
+            "z_window": z_window,
+        })
+
+
     print("------------------------------")
     print(f"Average annualized return = {sum(test_results)/len(test_results):.1f}%")
 
+    results_df = pd.DataFrame(results)
+    results_df.to_csv("walk_forward_results.csv", index=False)
+    results_df.to_markdown("walk_forward_results.md", index=False)
+
+    print(results_df)
 
