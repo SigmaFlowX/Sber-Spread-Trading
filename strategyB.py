@@ -208,10 +208,11 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
     equity = np.array(equity_curve)
     returns = equity[1:] / equity[:-1] - 1
-    mean_ret = returns.mean()
-    std_ret = returns.std(ddof=1)
-    sharpe_daily = mean_ret / std_ret
-    sharpe_annual = sharpe_daily * np.sqrt(252)
+    returns = pd.Series(returns, index=pd.to_datetime(timestamps[1:]))
+    daily_returns = (1 + returns).groupby(returns.index.date).prod() - 1
+    mean = daily_returns.mean()
+    std = daily_returns.std()
+    sharpe_annual = mean / std * 252 ** 0.5
 
 
     if plot:
