@@ -261,7 +261,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=100, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=200, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
