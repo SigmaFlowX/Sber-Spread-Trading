@@ -206,13 +206,12 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     winning_trades = sum(1 for x in pnls if x > 0)
     win_ratio = winning_trades/total_trades
 
-    equity = np.array(equity_curve)
-    returns = equity[1:] / equity[:-1] - 1
-    returns = pd.Series(returns, index=pd.to_datetime(timestamps[1:]))
-    daily_returns = (1 + returns).groupby(returns.index.date).prod() - 1
-    mean = daily_returns.mean()
-    std = daily_returns.std()
-    sharpe_annual = mean / std * 252 ** 0.5
+    equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
+    returns_10min = equity_series.pct_change().dropna()
+    daily_returns = returns_10min.resample('1D').apply(lambda x: (1 + x).prod() - 1).dropna()
+    mean_daily = daily_returns.mean()
+    std_daily = daily_returns.std()
+    sharpe_annual = mean_daily / std_daily * np.sqrt(252)
 
 
     if plot:
