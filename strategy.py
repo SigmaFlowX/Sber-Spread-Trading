@@ -198,9 +198,10 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     win_ratio = winning_trades/total_trades
 
     equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
-    returns_10min = equity_series.pct_change().dropna()
-    N = 252 * 39
-    sharpe = returns_10min.mean() / returns_10min.std() * np.sqrt(N)
+    returns_1min = equity_series.pct_change().dropna()
+    returns_1min = returns_1min[returns_1min != 0].dropna()
+    N = 252 * 390
+    sharpe = returns_1min.mean() / returns_1min.std() * np.sqrt(N)
 
     if plot:
         plt.figure(figsize=(12, 5))
@@ -257,7 +258,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=20, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=30, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -266,7 +267,7 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        sharpe,absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=False)
+        sharpe,absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=True)
 
         print("-----------------------------------")
         print(f"Test profit = {profit:.1f}%")
