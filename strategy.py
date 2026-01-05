@@ -9,7 +9,7 @@ from datetime import timedelta
 import numpy as np
 
 
-optuna.logging.set_verbosity(optuna.logging.CRITICAL)
+#optuna.logging.set_verbosity(optuna.logging.CRITICAL)
 
 def open_data(timeframe, since=None):
     df_sber = pd.read_csv(f"data/SBER{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -199,10 +199,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
     equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
     returns_10min = equity_series.pct_change().dropna()
-    daily_returns = returns_10min.resample('1D').apply(lambda x: (1 + x).prod() - 1).dropna()
-    mean_daily = daily_returns.mean()
-    std_daily = daily_returns.std()
-    sharpe_annual = mean_daily / std_daily * np.sqrt(252)
+    N = 252 * 39
+    sharpe = returns_10min.mean() / returns_10min.std() * np.sqrt(N)
 
     if plot:
         plt.figure(figsize=(12, 5))
@@ -213,7 +211,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return sharpe_annual ,balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
+    return sharpe,balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -248,7 +246,7 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
 
 if __name__ == "__main__":
-    df = open_data(timeframe=10)
+    df = open_data(timeframe=1)
     windows = generate_walkforward_windows(df)
 
     results = []
@@ -259,7 +257,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=200, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=20, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
