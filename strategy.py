@@ -11,9 +11,9 @@ import numpy as np
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)
 
-def open_data(since=None):
-    df_sber = pd.read_csv("data/SBER10min.csv", parse_dates=["timestamp"], index_col="timestamp")
-    df_sberp = pd.read_csv("data/SBERP10min.csv", parse_dates=["timestamp"], index_col="timestamp")
+def open_data(timeframe, since=None):
+    df_sber = pd.read_csv(f"data/SBER{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
+    df_sberp = pd.read_csv(f"data/SBERP{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
 
     df_sber = df_sber[['close']].copy()
     df_sberp = df_sberp[['close']].copy()
@@ -49,8 +49,6 @@ def prepare_data_arrays(df, z_window, spread_window):
     df = df.dropna()
 
     return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
-
-
 
 @njit()
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
@@ -250,7 +248,7 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
 
 if __name__ == "__main__":
-    df = open_data()
+    df = open_data(timeframe=10)
     windows = generate_walkforward_windows(df)
 
     results = []
