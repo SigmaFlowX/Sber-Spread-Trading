@@ -242,7 +242,7 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
 
 if __name__ == "__main__":
-    df = open_data(timeframe=10, since="01-01-2025")
+    df = open_data(timeframe=10, since="01-01-2024")
     windows = generate_walkforward_windows(df)
 
     balance = 1000000
@@ -307,8 +307,16 @@ if __name__ == "__main__":
     print("------------------------------")
 
     total_equity = pd.concat(equity_series).sort_index()
+
+
+    plt.figure(figsize=(12, 5))
     plt.plot(total_equity.index, total_equity)
+    plt.title("Equity curve")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
     plt.show()
+
+
     results_df = pd.DataFrame(results)
     results_df.to_csv("walk_forward_results.csv", index=False)
     results_df.to_markdown("walk_forward_results.md", index=False)
