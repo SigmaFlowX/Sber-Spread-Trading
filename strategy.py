@@ -111,9 +111,8 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
     return (balance - initial_balance)/initial_balance * 100
 
-def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps,plot=False):
+def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps, initial_balance=1000000,plot=False):
     fee = 0.008 / 100
-    initial_balance = 1000000
     balance = initial_balance
     risk_percent = 10
     pos = 0
@@ -208,7 +207,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
+    return equity_series, balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -243,11 +242,14 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
 
 if __name__ == "__main__":
-    df = open_data(timeframe=1)
+    df = open_data(timeframe=10, since="01-01-2025")
     windows = generate_walkforward_windows(df)
+
+    balance = 1000000
 
     results = []
     test_results = []
+    equity_series = []
     for train_start, train_end, test_start, test_end in windows:
         print(f"\nPeriod: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
         train_df = df.loc[train_start:train_end].copy()
@@ -263,7 +265,9 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=True)
+        equity, absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, initial_balance = balance, plot=False)
+        balance += absolute_profit
+        equity_series.append(equity)
 
         print("-----------------------------------")
         print(f"Test profit = {profit:.1f}%")
@@ -302,7 +306,9 @@ if __name__ == "__main__":
 
     print("------------------------------")
 
-
+    total_equity = pd.concat(equity_series).sort_index()
+    plt.plot(total_equity.index, total_equity)
+    plt.show()
     results_df = pd.DataFrame(results)
     results_df.to_csv("walk_forward_results.csv", index=False)
     results_df.to_markdown("walk_forward_results.md", index=False)
