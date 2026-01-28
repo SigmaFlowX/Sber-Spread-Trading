@@ -9,6 +9,9 @@ from datetime import timedelta
 import numpy as np
 
 
+STARTING_BALANCE = 100000
+FEE = 0.008/100
+
 #optuna.logging.set_verbosity(optuna.logging.CRITICAL)
 
 def open_data(timeframe, since=None):
@@ -53,7 +56,6 @@ def prepare_data_arrays(df, z_window, spread_window):
 @njit()
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
 
-    fee = 0.008/100
     initial_balance = 1000000
     balance = initial_balance
     risk_percent = 10
@@ -98,7 +100,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
-                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 balance += long_pnl + short_pnl - total_fee
 
             elif pos == -1 and z_score >= 0:
@@ -106,13 +108,12 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
-                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 balance += long_pnl + short_pnl - total_fee
 
     return (balance - initial_balance)/initial_balance * 100
 
 def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps, initial_balance=1000000,plot=False):
-    fee = 0.008 / 100
     balance = initial_balance
     risk_percent = 10
     pos = 0
@@ -163,7 +164,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
-                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 paid_fees += total_fee
                 balance += long_pnl + short_pnl - total_fee
 
@@ -175,7 +176,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
-                total_fee = fee * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
+                total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 paid_fees += total_fee
                 balance += long_pnl + short_pnl - total_fee
 
@@ -207,7 +208,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return equity_series, balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
+    return balance, equity_series, balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -245,7 +246,7 @@ if __name__ == "__main__":
     df = open_data(timeframe=10, since="01-01-2024")
     windows = generate_walkforward_windows(df)
 
-    balance = 1000000
+    balance = STARTING_BALANCE
 
     results = []
     test_results = []
@@ -265,10 +266,33 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        equity, absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, initial_balance = balance, plot=False)
-        balance += absolute_profit
-        equity_series.append(equity)
 
+        (
+            final_balance,
+            equity,
+            absolute_profit,
+            profit,
+            max_pnl,
+            min_pnl,
+            avg_pnl,
+            win_ratio,
+            total_trades,
+            avg_holding_time,
+            annualized_return,
+            paid_fees,
+        ) = test_strategy_slow(
+            sber_price_arr,
+            sberp_price_arr,
+            z_score_arr,
+            a_arr,
+            z_threshold,
+            timestamps=timestamps,
+            initial_balance=balance,
+            plot=True,
+        )
+
+        equity_series.append(equity)
+        balance = final_balance
         print("-----------------------------------")
         print(f"Test profit = {profit:.1f}%")
         print(f"Test absolute profit = {absolute_profit}")
