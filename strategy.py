@@ -8,11 +8,18 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
 
+#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
 FEE = 0.008/100
+SINCE = "01-01-2024" #None to use all the data
+TIMEFRAME = 1        #1 or 10 (min)
+N_TRIALS = 30        #optuna study trials
+N_TRAIN_MONTHS = 6
+N_TEST_MONTHS = 3
+PLOT_EQUITIES = False
 
-#optuna.logging.set_verbosity(optuna.logging.CRITICAL)
+
 
 def open_data(timeframe, since=None):
     df_sber = pd.read_csv(f"data/SBER{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -212,9 +219,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
 def objective(trial, df):
     df = df.copy()
-    z_threshold = trial.suggest_float('z_threshold', 0.5,5)
-    z_window = trial.suggest_int('z_window', 5,50)
-    spread_window = trial.suggest_int('spread_window', 10,3000, log=True)
+    z_threshold = trial.suggest_float('z_threshold', 0.5,50)
+    z_window = trial.suggest_int('z_window', 5,200)
+    spread_window = trial.suggest_int('spread_window', 10,30000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
@@ -243,8 +250,8 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
 
 
 if __name__ == "__main__":
-    df = open_data(timeframe=10, since="01-01-2024")
-    windows = generate_walkforward_windows(df)
+    df = open_data(timeframe=TIMEFRAME, since=SINCE)
+    windows = generate_walkforward_windows(df, train_months=N_TRAIN_MONTHS, test_months=N_TEST_MONTHS)
 
     balance = STARTING_BALANCE
 
@@ -257,7 +264,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=30, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
@@ -288,7 +295,7 @@ if __name__ == "__main__":
             z_threshold,
             timestamps=timestamps,
             initial_balance=balance,
-            plot=True,
+            plot=PLOT_EQUITIES,
         )
 
         equity_series.append(equity)
