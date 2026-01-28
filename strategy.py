@@ -301,7 +301,7 @@ if __name__ == "__main__":
 
 
     print("------------------------------")
-    print(f"Average annualized return = {sum(test_results)/len(test_results):.1f}%")
+
 
     results_df = pd.DataFrame(results)
     results_df.to_csv("walk_forward_results.csv", index=False)
