@@ -198,10 +198,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     win_ratio = winning_trades/total_trades
 
     equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
-    returns_1min = equity_series.pct_change().dropna()
-    returns_1min = returns_1min[returns_1min != 0].dropna()
-    N = 252 * 390
-    sharpe = returns_1min.mean() / returns_1min.std() * np.sqrt(N)
 
     if plot:
         plt.figure(figsize=(12, 5))
@@ -212,7 +208,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         plt.show()
 
 
-    return sharpe,balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
+    return balance - initial_balance, (balance - initial_balance)/initial_balance * 100, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees
 
 def objective(trial, df):
     df = df.copy()
@@ -267,13 +263,12 @@ if __name__ == "__main__":
 
         sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
         timestamps = test_df.index[-len(sberp_price_arr):]
-        sharpe,absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=True)
+        absolute_profit, profit, max_pnl, min_pnl, avg_pnl, win_ratio, total_trades, avg_holding_time, annualized_return, paid_fees = test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps=timestamps, plot=True)
 
         print("-----------------------------------")
         print(f"Test profit = {profit:.1f}%")
         print(f"Test absolute profit = {absolute_profit}")
         print(f"Annualized return = {annualized_return:.1f}%")
-        print(f"Anuualized sharpe =  {sharpe}")
         print(f"Total trades =  {total_trades}")
         print(f"Max_pnl = {max_pnl:.0f}")
         print(f"Min_pnl = {min_pnl:.0f}")
@@ -290,7 +285,6 @@ if __name__ == "__main__":
             "test_start": test_start.date(),
             "test_end": test_end.date(),
             "annualized_return_%": annualized_return,
-            "sharpe": sharpe,
             "profit_%": profit,
             "absolute_profit": absolute_profit,
             "total_trades": total_trades,
