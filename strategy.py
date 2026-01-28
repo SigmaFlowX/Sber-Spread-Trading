@@ -241,7 +241,7 @@ def generate_walkforward_windows(df, train_months=6, test_months=3):
             break
 
         windows.append((train_start, train_end, test_start, test_end))
-        current_start = test_start
+        current_start = train_start + relativedelta(months=test_months)
 
     return windows
 
