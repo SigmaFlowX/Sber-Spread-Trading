@@ -11,16 +11,28 @@ import numpy as np
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
-FEE = 0.02/100
-SINCE = "01-01-2020" #None to use all the data
+FEE = 0.01/100
+SINCE = "01-01-2024" #None to use all the data
 TIMEFRAME = 10    #1 or 10 (min)
 N_TRIALS = 30        #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
-RISK_PCT = 100
+RISK_PCT = 10
 
 
+def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
+    returns = equity.pct_change().dropna()
+
+    total_return = equity.iloc[-1] / equity.iloc[0]
+    n_years = (equity.index[-1] - equity.index[0]).days / 365
+    ann_return = total_return ** (1 / n_years) - 1
+
+    rf_period = risk_free_rate / periods_per_year
+    excess_returns = returns - rf_period
+    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(periods_per_year)
+
+    return ann_return, sharpe
 
 def open_data(timeframe, since=None):
     df_sber = pd.read_csv(f"data/SBER{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
@@ -218,7 +230,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 def objective(trial, df):
     df = df.copy()
     z_threshold = trial.suggest_float('z_threshold', 0.5,5)
-    z_window = trial.suggest_int('z_window', 5,400)
+    z_window = trial.suggest_int('z_window', 5,400, log=True)
     spread_window = trial.suggest_int('spread_window', 10,3000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
@@ -254,7 +266,6 @@ if __name__ == "__main__":
     balance = STARTING_BALANCE
 
     results = []
-    test_results = []
     equity_series = []
     for train_start, train_end, test_start, test_end in windows:
         print(f"\nPeriod: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
@@ -298,7 +309,7 @@ if __name__ == "__main__":
 
         equity_series.append(equity)
         balance = final_balance
-        print("-----------------------------------")
+
         print(f"Test profit = {profit:.1f}%")
         print(f"Test absolute profit = {absolute_profit}")
         print(f"Annualized return = {annualized_return:.1f}%")
@@ -310,23 +321,25 @@ if __name__ == "__main__":
         print(f"Average holding time =  {avg_holding_time.total_seconds() / 3600:.1f} hours")
         print(f"Total paid fees = {paid_fees:.1f}")
         print("Best params: ", best_params)
-        test_results.append(annualized_return)
+
+
+        print("-----------------------------------")
 
         results.append({
             "train_start": train_start.date(),
             "train_end": train_end.date(),
             "test_start": test_start.date(),
             "test_end": test_end.date(),
-            "annualized_return_%": annualized_return,
-            "profit_%": profit,
-            "absolute_profit": absolute_profit,
+            "annualized_return_%": round(annualized_return, 1),
+            "profit_%": round(profit, 1),
+            "absolute_profit": round(absolute_profit, 0),
             "total_trades": total_trades,
-            "win_ratio_%": win_ratio * 100,
-            "avg_holding_hours": avg_holding_time.total_seconds() / 3600,
-            "max_pnl": max_pnl,
-            "min_pnl": min_pnl,
-            "avg_pnl": avg_pnl,
-            "paid_fees": paid_fees,
+            "win_ratio_%": round(win_ratio * 100, 1),
+            "avg_holding_hours": round(avg_holding_time.total_seconds() / 3600,1),
+            "max_pnl": round(max_pnl, 1),
+            "min_pnl": round(min_pnl, 1),
+            "avg_pnl": round(avg_pnl,1),
+            "paid_fees": round(paid_fees,1),
             "z_threshold": z_threshold,
             "spread_window": spread_window,
             "z_window": z_window,
@@ -336,7 +349,11 @@ if __name__ == "__main__":
     print("------------------------------")
 
     total_equity = pd.concat(equity_series).sort_index()
-    print(f"Total return since {SINCE} is {(STARTING_BALANCE - balance)/STARTING_BALANCE * 100}")
+    ann_return, sharpe = performance_metrics(total_equity)
+
+    print(f"Total return since {SINCE} is {(balance - STARTING_BALANCE)/STARTING_BALANCE * 100:.1f} %")
+    print(f"Annualized return is {ann_return:.1f}")
+    print(f"Annualized sharpe ratio is {sharpe:.1f}")
 
     plt.figure(figsize=(12, 5))
     plt.plot(total_equity.index, total_equity)
