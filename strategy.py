@@ -8,16 +8,17 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
 
-#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
+optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
-FEE = 0.008/100
-SINCE = "01-01-2024" #None to use all the data
-TIMEFRAME = 1        #1 or 10 (min)
+FEE = 0.02/100
+SINCE = "01-01-2020" #None to use all the data
+TIMEFRAME = 10    #1 or 10 (min)
 N_TRIALS = 30        #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
+RISK_PCT = 100
 
 
 
@@ -62,10 +63,8 @@ def prepare_data_arrays(df, z_window, spread_window):
 
 @njit()
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
-
     initial_balance = 1000000
     balance = initial_balance
-    risk_percent = 10
     pos = 0
     # SBER = a * SBERP + b
     # d(SBER) = a * d(SBERP)
@@ -81,7 +80,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
         if pos == 0:
             if z_score > z_threshold:
                 pos = 1
-                total_pos_size = balance * risk_percent / 100
+                total_pos_size = balance * RISK_PCT / 100
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -93,7 +92,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
             elif z_score < -z_threshold:
                 pos = -1
 
-                total_pos_size = balance * risk_percent / 100
+                total_pos_size = balance * RISK_PCT / 100
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -122,7 +121,6 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
 def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps, initial_balance=1000000,plot=False):
     balance = initial_balance
-    risk_percent = 10
     pos = 0
     pnls = []
     equity_curve = []
@@ -139,7 +137,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
         if pos == 0:
             if z_score > z_threshold:
                 pos = 1
-                total_pos_size = balance * risk_percent / 100
+                total_pos_size = balance * RISK_PCT / 100
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -154,7 +152,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
             elif z_score < -z_threshold:
                 pos = -1
 
-                total_pos_size = balance * risk_percent / 100
+                total_pos_size = balance * RISK_PCT / 100
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -219,9 +217,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
 
 def objective(trial, df):
     df = df.copy()
-    z_threshold = trial.suggest_float('z_threshold', 0.5,50)
-    z_window = trial.suggest_int('z_window', 5,200)
-    spread_window = trial.suggest_int('spread_window', 10,30000, log=True)
+    z_threshold = trial.suggest_float('z_threshold', 0.5,5)
+    z_window = trial.suggest_int('z_window', 5,400)
+    spread_window = trial.suggest_int('spread_window', 10,3000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
@@ -338,7 +336,7 @@ if __name__ == "__main__":
     print("------------------------------")
 
     total_equity = pd.concat(equity_series).sort_index()
-
+    print(f"Total return since {SINCE} is {(STARTING_BALANCE - balance)/STARTING_BALANCE * 100}")
 
     plt.figure(figsize=(12, 5))
     plt.plot(total_equity.index, total_equity)
@@ -346,6 +344,7 @@ if __name__ == "__main__":
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.show()
+
 
 
     results_df = pd.DataFrame(results)
