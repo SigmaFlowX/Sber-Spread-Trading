@@ -1,12 +1,12 @@
-# SBER/SBERP Spread Trading Strategy
-This strategy can be used for any cointegrated assets, SBER and SBERP are just the most obvious ones on MOEX. 
+## About the strategy
+The strategy can be used for any cointegrated assets, but I used SBER and SBERP shares on MOEX. 
 
 
 A simple linear model is used:
-Price(SBER) = a * Price(SBERP) + b + E, <br>
+Price(asset1) = a * Price(asset2) + b + E, <br>
 where E is stationary and mean revearting.
 
-Then the Z-score is calculated for E = a * Price(SBER) - Price(SBERP) - b <br>
+Then the rolling Z-score is calculated for E = a * Price(asset1) - Price(asset2) - b <br>
 
 Entry conditions: <br>
 If z > z_threshold: short a * SBER and long SBERP <br>
@@ -53,6 +53,7 @@ Main limiting factors are fees and possible slippage (slippage was not modeled)
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
