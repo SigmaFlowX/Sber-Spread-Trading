@@ -12,7 +12,7 @@ optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study lo
 
 STARTING_BALANCE = 100000
 FEE = 0.01/100
-SINCE = "01-01-2024" #None to use all the data
+SINCE = "01-01-2025" #None to use all the data
 TIMEFRAME = 10    #1 or 10 (min)
 N_TRIALS = 30        #optuna study trials
 N_TRAIN_MONTHS = 6
@@ -352,7 +352,7 @@ if __name__ == "__main__":
     ann_return, sharpe = performance_metrics(total_equity)
 
     print(f"Total return since {SINCE} is {(balance - STARTING_BALANCE)/STARTING_BALANCE * 100:.1f} %")
-    print(f"Annualized return is {ann_return:.1f}")
+    print(f"Annualized return is {ann_return*100:.2f}%")
     print(f"Annualized sharpe ratio is {sharpe:.1f}")
 
     plt.figure(figsize=(12, 5))
