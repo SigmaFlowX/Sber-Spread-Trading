@@ -12,9 +12,9 @@ optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study lo
 
 STARTING_BALANCE = 100000
 FEE = 0.01/100
-SINCE = "01-01-2023" #None to use all the data
+SINCE = "01-01-2025" #None to use all the data
 TIMEFRAME = 1   #1 or 10 (min)
-N_TRIALS = 30      #optuna study trials
+N_TRIALS = 2     #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
@@ -365,8 +365,8 @@ if __name__ == "__main__":
 
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("walk_forward_results.csv", index=False)
-    results_df.to_markdown("walk_forward_results.md", index=False)
+    results_df.to_csv("results/walk_forward_results.csv", index=False)
+    results_df.to_markdown("results/walk_forward_results.md", index=False)
 
     print(results_df)
 
