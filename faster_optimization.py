@@ -11,8 +11,8 @@ import numpy as np
 
 STARTING_BALANCE = 100000
 FEE = 0.01/100
-SINCE = "01-01-2023" #None to use all the data
-TIMEFRAME = 1   #1 or 10 (min)
+SINCE = "01-01-2024" #None to use all the data
+TIMEFRAME = 10  #1 or 10 (min)
 N_TRIALS = 30      #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
@@ -41,7 +41,7 @@ def prepare_df(df, z_window, spread_window):
 
     return df
 
-def faster_backtest(df, z_threshold):
+def faster_backtest(df, z_threshold,initial_balance=STARTING_BALANCE, test=False):
     df['signal'] = np.where(
         df['z_score'] > z_threshold, 1,
         np.where(df['z_score'] < -z_threshold, -1, 0)
@@ -62,7 +62,7 @@ def faster_backtest(df, z_threshold):
             + df['position_exec'] * df['SBERP'].pct_change()
     )
 
-    df['balance_prev'] = STARTING_BALANCE if 'balance' not in df else df['balance'].shift(1).fillna(STARTING_BALANCE)
+    df['balance_prev'] = initial_balance if 'balance' not in df else df['balance'].shift(1).fillna(initial_balance)
     df['exposure'] = RISK_PCT * df['balance_prev']
 
     df['gross_pnl'] = df['exposure'] * df['pair_ret']
@@ -72,11 +72,15 @@ def faster_backtest(df, z_threshold):
     df['commission'] = FEE * df['turnover']
 
     df['pnl'] = df['gross_pnl'] - df['commission']
-    df['balance'] = STARTING_BALANCE + df['pnl'].cumsum()
+    df['balance'] = initial_balance + df['pnl'].cumsum()
 
-    final_balance = df.iloc['balance'][-1]
+    final_balance = df.iloc[-1]['balance']
 
-    return (final_balance - STARTING_BALANCE)/STARTING_BALANCE * 100
+    if test:
+        equity_curve = pd.Series(df['balance'], index=df.index)
+        return equity_curve, (final_balance - initial_balance)/initial_balance * 100, final_balance
+
+    return (final_balance - initial_balance)/initial_balance * 100
 
 def objective(trial, df):
     df = df.copy()
@@ -94,4 +98,25 @@ if __name__ == "__main__":
     row_df = strategy.open_data(timeframe=TIMEFRAME, since=SINCE)
     df = prepare_df(row_df, 10, 10)
 
-    faster_backtest(df, 1)
+    windows = strategy.generate_walkforward_windows(df, train_months=N_TRAIN_MONTHS, test_months=N_TEST_MONTHS)
+
+    balance = STARTING_BALANCE
+    for train_start, train_end, test_start, test_end in windows:
+        print( f"\nPeriod: {train_start.date()} — {train_end.date()} (train), {test_start.date()} — {test_end.date()} (test)")
+        train_df = df.loc[train_start:train_end].copy()
+        test_df = df.loc[test_start:test_end].copy()
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
+
+        best_params = study.best_params
+        z_threshold = best_params['z_threshold']
+        spread_window = best_params['spread_window']
+        z_window = best_params['z_window']
+
+        test_data = prepare_df(test_df, z_window, spread_window)
+        equity_series, total_return, final_balance = faster_backtest(test_data, z_threshold, initial_balance=balance, test=True)
+        print(f"Total test return is {total_return:.2f}%")
+        print("------------------------------------------")
+        balance = final_balance
+
