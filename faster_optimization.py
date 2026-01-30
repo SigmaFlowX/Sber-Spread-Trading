@@ -74,6 +74,20 @@ def faster_backtest(df, z_threshold):
     df['pnl'] = df['gross_pnl'] - df['commission']
     df['balance'] = STARTING_BALANCE + df['pnl'].cumsum()
 
+    final_balance = df.iloc['balance'][-1]
+
+    return (final_balance - STARTING_BALANCE)/STARTING_BALANCE * 100
+
+def objective(trial, df):
+    df = df.copy()
+    z_threshold = trial.suggest_float('z_threshold', 0.5, 5)
+    z_window = trial.suggest_int('z_window', 5, 400, log=True)
+    spread_window = trial.suggest_int('spread_window', 10, 3000, log=True)
+
+    data = prepare_df(df, z_window, spread_window)
+
+    return faster_backtest(data, z_threshold)
+
 
 
 if __name__ == "__main__":
