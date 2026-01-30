@@ -4,6 +4,7 @@ from statsmodels.regression.rolling import RollingOLS
 from numba import njit
 from dateutil.relativedelta import relativedelta
 import optuna
+import os
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
@@ -35,8 +36,11 @@ def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
     return ann_return, sharpe
 
 def open_data(timeframe, since=None):
-    df_sber = pd.read_csv(f"data/SBER{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
-    df_sberp = pd.read_csv(f"data/SBERP{timeframe}min.csv", parse_dates=["timestamp"], index_col="timestamp")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base_dir, "..", "data")
+
+    df_sber = pd.read_csv(os.path.join(data_dir, f"SBER{timeframe}min.csv"), parse_dates=["timestamp"], index_col="timestamp")
+    df_sberp = pd.read_csv(os.path.join(data_dir, f"SBERP{timeframe}min.csv"),parse_dates=["timestamp"], index_col="timestamp")
 
     df_sber = df_sber[['close']].copy()
     df_sberp = df_sberp[['close']].copy()
@@ -365,8 +369,12 @@ if __name__ == "__main__":
 
 
     results_df = pd.DataFrame(results)
-    results_df.to_csv("results/walk_forward_results.csv", index=False)
-    results_df.to_markdown("results/walk_forward_results.md", index=False)
+
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    results_dir = os.path.join(base_dir, "results")
+
+    results_df.to_csv(os.path.join(results_dir, "walk_forward_results.csv"), index=False)
+    results_df.to_markdown(os.path.join(results_dir, "walk_forward_results.md"), index=False)
 
     print(results_df)
 
