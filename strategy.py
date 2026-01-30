@@ -12,9 +12,9 @@ optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study lo
 
 STARTING_BALANCE = 100000
 FEE = 0.01/100
-SINCE = "01-01-2025" #None to use all the data
-TIMEFRAME = 10    #1 or 10 (min)
-N_TRIALS = 30        #optuna study trials
+SINCE = "01-01-2023" #None to use all the data
+TIMEFRAME = 1   #1 or 10 (min)
+N_TRIALS = 30      #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
