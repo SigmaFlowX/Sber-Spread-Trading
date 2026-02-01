@@ -1,4 +1,4 @@
-from src import strategy
+from src import strategy_optimization
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
@@ -91,10 +91,10 @@ def objective(trial, df):
 
 
 if __name__ == "__main__":
-    row_df = strategy.open_data(timeframe=TIMEFRAME, since=SINCE)
+    row_df = strategy_optimization.open_data(timeframe=TIMEFRAME, since=SINCE)
     df = prepare_df(row_df, 10, 10)
 
-    windows = strategy.generate_walkforward_windows(df, train_months=N_TRAIN_MONTHS, test_months=N_TEST_MONTHS)
+    windows = strategy_optimization.generate_walkforward_windows(df, train_months=N_TRAIN_MONTHS, test_months=N_TEST_MONTHS)
 
     balance = STARTING_BALANCE
     for train_start, train_end, test_start, test_end in windows:
