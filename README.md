@@ -22,6 +22,9 @@ Fees and included in the model, but not the slippage.
 # Walk-Forward Optimization Results
 Initial balance for each following tests is 100 000 and 10% of the balance is used for trades. 
 ## 10 mintues timeframe, 0.008% fee
+Annialized return is 5.9% 
+
+Sharpe ratio is 0.7
 | train_start   | train_end   | test_start   | test_end   |   annualized_return_% |   profit_% |   absolute_profit |   total_trades |   win_ratio_% |   avg_holding_hours |   max_pnl |   min_pnl |   avg_pnl |   paid_fees |   z_threshold |   spread_window |   z_window |
 |:--------------|:------------|:-------------|:-----------|----------------------:|-----------:|------------------:|---------------:|--------------:|--------------------:|----------:|----------:|----------:|------------:|--------------:|----------------:|-----------:|
 | 2020-01-03    | 2020-07-03  | 2020-07-03   | 2020-10-03 |                   5.6 |        1.2 |              1194 |            729 |          76.1 |                 1.8 |      61.5 |    -102.4 |       3.2 |      1148.6 |      0.784295 |             638 |          9 |
@@ -44,12 +47,19 @@ Initial balance for each following tests is 100 000 and 10% of the balance is us
 | 2024-04-03    | 2024-10-03  | 2024-10-03   | 2025-01-03 |                   4.5 |        1   |              1296 |            327 |          96.9 |                 4   |      49.2 |     -32.3 |       6   |       666.2 |      0.689393 |             357 |        184 |
 | 2024-07-03    | 2025-01-03  | 2025-01-03   | 2025-04-03 |                   5.2 |        1.1 |              1498 |            667 |          85.5 |                 2   |      52.9 |     -17.3 |       4.3 |      1367   |      1.01727  |             275 |         16 |
 | 2024-10-03    | 2025-04-03  | 2025-04-03   | 2025-07-03 |                   6.6 |        1.6 |              2083 |            647 |          90.1 |                 2.5 |      45.8 |     -25.6 |       5.3 |      1345.4 |      0.784313 |              85 |         53 |
-| 2025-01-03    | 2025-07-03  | 2025-07-03   | 2025-10-03 |                   2.8 |        0.6 |               857 |            499 |          86.8 |                 2.9 |      30   |    -148.4 |       3.8 |      1049.2 |      0.714931 |              66 |        696 |
+| 2025-01-03    | 2025-07-03  | 2025-07-03   | 2025-10-03 |                   2.8 |        0.6 |               857 |            499 |          86.8 |                 2.9 |      30   |    
+-148.4 |       3.8 |      1049.2 |      0.714931 |              66 |        696 |
+
+
+![Equity Curve](images/10m0.008.png)
+
+
 ## Data links
 
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
