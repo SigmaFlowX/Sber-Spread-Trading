@@ -1,12 +1,8 @@
-import strategy
+from src import strategy
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.regression.rolling import RollingOLS
-from numba import njit
-from dateutil.relativedelta import relativedelta
 import optuna
-import matplotlib.pyplot as plt
-from datetime import timedelta
 import numpy as np
 
 STARTING_BALANCE = 100000

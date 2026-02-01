@@ -42,8 +42,6 @@ def get_candles(symbol, start_date, end_date, interval=10):
     return df
 
 
-
-
 timeframe = 1
 symbol = "SBERP"
 start_date = datetime(2015, 1, 1)

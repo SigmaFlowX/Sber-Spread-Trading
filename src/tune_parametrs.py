@@ -1,5 +1,5 @@
 # This code is used to find current optimal parameters for the strategy
-import strategy
+from src import strategy
 import optuna
 
 
