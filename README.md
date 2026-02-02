@@ -19,6 +19,17 @@ z >= 0 <br>
 Walk forward optimization is performed using optuna. <br>
 Fees and included in the model, but not the slippage.
 
+# Preliminary results and what shall be improved 
+Strategy seems to be profitable and stable enough for furher research, but a lot of things are yet to be reworked. 
+
+Currenly returns are calculated realtive to the balance and since the strategy consistenly generates profit without major drawdowns the 100% allocation for each trade would be superior. However, that probably does not reppresent reality well enough. 
+
+Therefore, it would be great to calculate returns relative to the capital at risk and not just on the plain balance. 
+
+Sharpe ratio estimation is as well may not be realistic as returns are now only updated when the positions are closed. 
+
+Slippage is also not included in the backtest. 
+
 # Walk-Forward Optimization Results
 Initial balance for each following tests is 100 000 and 10% of the balance is used for trades. 
 ## 10 mintues timeframe, 0.008% fee
@@ -86,6 +97,7 @@ Sharpe ratio is 0.2
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
