@@ -100,8 +100,8 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
 
@@ -112,8 +112,8 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
         else:
@@ -157,8 +157,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
 
@@ -172,8 +172,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
 
