@@ -1,20 +1,22 @@
 # About the strategy
-The strategy can be used for any cointegrated assets, but I used SBER and SBERP shares on MOEX. 
+The is a classic spread mean-reversion strategy for cointegrated assets. Just for certainty I used SBER and SBERP traiding pairs from MOEX. 
 
 
 A simple linear model is used:
 Price(asset1) = a * Price(asset2) + b + E, <br>
-where E is stationary and mean revearting.
+where E is stationary and mean revearting. <br>
+Linear regression is rolling with window spread_window, which is one of the optimizaed parameters. 
 
 Then the rolling Z-score is calculated for E = a * Price(asset1) - Price(asset2) - b <br>
+Z-score window is another optimized parameter
 
 Entry conditions: <br>
-If z > z_threshold: short a * SBER and long SBERP <br>
-If z < -z_threshold: short SBERP and long a * SBERP
+If z > z_entry: short a * SBER and long SBERP <br>
+If z < -z_entry: short SBERP and long a * SBERP
 
 Exit conditions: <br>
-z <= 0 <br>
-z >= 0 <br>
+z <= z_exit <br>
+z >= z_exit <br>
 
 Walk forward optimization is performed using optuna. <br>
 Fees and included in the model, but not the slippage.
@@ -22,7 +24,8 @@ Fees and included in the model, but not the slippage.
 # Preliminary results and what shall be improved 
 Strategy seems to be profitable and stable enough for furher research, but a lot of things are yet to be reworked. 
 
-Currenly returns are calculated realtive to the balance and since the strategy consistenly generates profit without major drawdowns the 100% allocation for each trade would be superior. However, that probably does not reppresent reality well enough. 
+Currenly returns are calculated relative to the balance and since the strategy consistenly generates profit without major drawdowns the 100% allocation for each trade would be superior. However, that probably does not reppresent reality well enough. 
+
 Because of that, it's really hard to tell returns of the strategy as it heavily depends on the RISK_PCT. With 10% allocation for each trade we are possibly looking for around 5-10% annualy, but for 100% the numbers are around 40-50% anually.
 
 Therefore, it would be great to calculate returns relative to the capital at risk and not just on the plain balance. 
@@ -33,7 +36,7 @@ Slippage is also not included in the backtest.
 
 
 
-# Walk-Forward Optimization Results
+# Walk-Forward Optimization Results (outdated)
 Initial balance for each following tests is 100 000 and 10% of the balance is used for trades. 
 ## 10 mintues timeframe, 0.008% fee
 Annialized return is 5.9% 
@@ -100,6 +103,7 @@ Sharpe ratio is 0.2
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
