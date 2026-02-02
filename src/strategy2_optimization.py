@@ -238,9 +238,11 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
 
 def objective(trial, df):
     df = df.copy()
-    z_threshold = trial.suggest_float('z_threshold', 0.4,5)
-    z_window = trial.suggest_int('z_window', 5,10000, log=True)
-    spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
+    z_entry = trial.suggest_float('z_threshold', 0.4,5)
+    z_exit = trial.suggest_float('z_threshold', 0.4,5)
+    sl_pct = trial.suggest_float('z_threshold', 1,100)
+    z_window = trial.suggest_int('z_window', 5,5000, log=True)
+    spread_window = trial.suggest_int('spread_window', 10,5000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
