@@ -287,7 +287,9 @@ if __name__ == "__main__":
         study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
 
         best_params = study.best_params
-        z_threshold = best_params['z_threshold']
+        z_entry = best_params['z_entry']
+        z_exit = best_params['z_exit']
+        sl_pct = best_params['sl_pct']
         spread_window = best_params['spread_window']
         z_window = best_params['z_window']
 
