@@ -135,7 +135,6 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                     balance += total_pnl
                     pos = 0
 
-                balance += long_pnl + short_pnl - total_fee
 
     return (balance - initial_balance)/initial_balance * 100
 
