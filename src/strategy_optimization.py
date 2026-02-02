@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
+from optuna.visualization import plot_optimization_history
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
