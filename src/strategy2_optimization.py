@@ -15,7 +15,7 @@ STARTING_BALANCE = 100000
 FEE = 0.008/100
 SINCE = "01-01-2020" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
-N_TRIALS = 50     #optuna study trials
+N_TRIALS = 200    #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
@@ -100,10 +100,12 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
+
+                entry_balance = balance
 
             elif z_score < -z_entry:
                 pos = -1
@@ -112,17 +114,19 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
+
+                entry_balance = balance
         else:
             if pos == 1:
                 long_pnl = (sberp_price - sberp_entry_price) * sberp_quantity
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
                 total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 total_pnl = long_pnl + short_pnl - total_fee
-                if total_pnl < -total_pos_size * sl_pct / 100 or z_score <= z_exit:
+                if total_pnl < -entry_balance * sl_pct / 100 or z_score <= z_exit:
                     balance += total_pnl
                     pos = 0
 
@@ -131,7 +135,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
                 total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 total_pnl = long_pnl + short_pnl - total_fee
-                if total_pnl < -total_pos_size * sl_pct / 100 or z_score >= -z_exit:
+                if total_pnl < -entry_balance * sl_pct / 100 or z_score >= -z_exit:
                     balance += total_pnl
                     pos = 0
 
@@ -160,10 +164,12 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
+
+                entry_balance = balance
 
                 entry_time = time
 
@@ -175,10 +181,12 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
-                sber_quantity = sber_pos_size // sber_price
-                sberp_quantity = sberp_pos_size // sberp_price
+                sber_quantity = int(sber_pos_size // sber_price)
+                sberp_quantity = int(sberp_pos_size // sberp_price)
                 sber_entry_price = sber_price
                 sberp_entry_price = sberp_price
+
+                entry_balance = balance
 
                 entry_time = time
 
@@ -188,7 +196,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
                 total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 total_pnl = long_pnl + short_pnl - total_fee
-                if total_pnl < - total_pos_size * sl_pct / 100 or z_score <= z_exit:
+                if total_pnl < - entry_balance * sl_pct / 100 or z_score <= z_exit:
                     paid_fees += total_fee
                     balance += total_pnl
                     pnls.append(long_pnl + short_pnl)
@@ -200,7 +208,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
                 total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 total_pnl = long_pnl + short_pnl - total_fee
-                if total_pnl < - total_pos_size * sl_pct / 100 or z_score >= -z_exit:
+                if total_pnl < - entry_balance * sl_pct / 100 or z_score >= -z_exit:
                     paid_fees += total_fee
                     balance += total_pnl
 
@@ -237,8 +245,8 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
 
 def objective(trial, df):
     df = df.copy()
-    z_entry = trial.suggest_float('z_entry', 0.4,5)
-    z_exit = trial.suggest_float('z_exit', 0.4,5)
+    z_entry = trial.suggest_float('z_entry', 0.1,5)
+    z_exit = trial.suggest_float('z_exit', 0.1, z_entry)
     sl_pct = trial.suggest_float('sl_pct', 1,100)
     z_window = trial.suggest_int('z_window', 5,5000, log=True)
     spread_window = trial.suggest_int('spread_window', 10,5000, log=True)
