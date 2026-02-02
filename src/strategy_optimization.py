@@ -20,6 +20,7 @@ N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
 RISK_PCT = 10
+OPTUNA_VISUALIZE = True
 
 
 def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
@@ -277,6 +278,10 @@ if __name__ == "__main__":
 
         study = optuna.create_study(direction="maximize")
         study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
+
+        if OPTUNA_VISUALIZE:
+            fig = plot_optimization_history(study)
+            fig.show()
 
         best_params = study.best_params
         z_threshold = best_params['z_threshold']
