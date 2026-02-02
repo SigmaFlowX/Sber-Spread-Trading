@@ -8,18 +8,20 @@ import os
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
+from optuna.visualization import plot_optimization_history
 
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
 FEE = 0.008/100
-SINCE = "01-01-2020" #None to use all the data
+SINCE = "01-01-2025" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
-N_TRIALS = 200    #optuna study trials
+N_TRIALS = 10    #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
 RISK_PCT = 10
+OPTUNA_VISUALIZE = True
 
 
 def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
@@ -246,7 +248,7 @@ def objective(trial, df):
     df = df.copy()
     z_entry = trial.suggest_float('z_entry', 0.1,5)
     z_exit = trial.suggest_float('z_exit', 0.1, z_entry)
-    sl_pct = trial.suggest_float('sl_pct', 1,100)
+    sl_pct = trial.suggest_float('sl_pct', 1,20)
     z_window = trial.suggest_int('z_window', 5,5000, log=True)
     spread_window = trial.suggest_int('spread_window', 10,5000, log=True)
 
@@ -291,6 +293,10 @@ if __name__ == "__main__":
 
         study = optuna.create_study(direction="maximize")
         study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
+
+        if OPTUNA_VISUALIZE:
+            fig = plot_optimization_history(study)
+            fig.show()
 
         best_params = study.best_params
         z_entry = best_params['z_entry']
