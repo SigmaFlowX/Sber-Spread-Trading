@@ -77,7 +77,7 @@ def prepare_data_arrays(df, z_window, spread_window):
 
     return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
 
-@njit()
+@njit(cache=True)
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
     initial_balance = 1000000
     balance = initial_balance
