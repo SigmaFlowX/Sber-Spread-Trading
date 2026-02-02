@@ -78,8 +78,7 @@ def prepare_data_arrays(df, z_window, spread_window):
     return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
 
 @njit(cache=True)
-def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct):
-    initial_balance = 1000000
+def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, initial_balance=100000):
     balance = initial_balance
     pos = 0
     # SBER = a * SBERP + b
@@ -142,7 +141,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
 
     return (balance - initial_balance)/initial_balance * 100
 
-def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, timestamps, initial_balance=1000000,plot=False):
+def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, timestamps, initial_balance=100000,plot=False):
     balance = initial_balance
     pos = 0
     pnls = []
@@ -253,7 +252,7 @@ def objective(trial, df):
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
-    return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct)
+    return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, STARTING_BALANCE)
 
 def generate_walkforward_windows(df, train_months=6, test_months=3):
     windows = []
