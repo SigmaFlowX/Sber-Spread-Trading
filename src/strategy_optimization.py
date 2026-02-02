@@ -15,7 +15,7 @@ STARTING_BALANCE = 100000
 FEE = 0.008/100
 SINCE = "01-01-2020" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
-N_TRIALS = 50     #optuna study trials
+N_TRIALS = 10     #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
@@ -78,8 +78,7 @@ def prepare_data_arrays(df, z_window, spread_window):
     return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
 
 @njit(cache=True)
-def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold):
-    initial_balance = 1000000
+def run_strategy_fast(sber_price_arr, sberp_price_arr,z_score_arr, a_arr, z_threshold,initial_balance=100000):
     balance = initial_balance
     pos = 0
     # SBER = a * SBERP + b
@@ -135,7 +134,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_thr
 
     return (balance - initial_balance)/initial_balance * 100
 
-def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps, initial_balance=1000000,plot=False):
+def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, timestamps, initial_balance=100000,plot=False):
     balance = initial_balance
     pos = 0
     pnls = []
@@ -239,7 +238,7 @@ def objective(trial, df):
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
-    return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold)
+    return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_threshold, initial_balance=STARTING_BALANCE)
 
 def generate_walkforward_windows(df, train_months=6, test_months=3):
     windows = []
