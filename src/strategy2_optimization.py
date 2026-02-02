@@ -355,7 +355,9 @@ if __name__ == "__main__":
             "min_pnl": round(min_pnl, 1),
             "avg_pnl": round(avg_pnl,1),
             "paid_fees": round(paid_fees,1),
-            "z_threshold": z_threshold,
+            "z_entry": z_entry,
+            "z_exit": z_exit,
+            "sl_pct": round(sl_pct, 1),
             "spread_window": spread_window,
             "z_window": z_window,
         })
