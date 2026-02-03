@@ -13,6 +13,8 @@ from optuna.visualization import plot_optimization_history
 optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
+INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
+KELLY_N = 50          # window for Kelly criterion
 FEE = 0.008/100
 SINCE = "01-01-2025" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
@@ -20,7 +22,6 @@ N_TRIALS = 100    #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
-RISK_PCT = 10
 OPTUNA_VISUALIZE = True
 
 
@@ -83,6 +84,10 @@ def prepare_data_arrays(df, z_window, spread_window):
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, initial_balance=100000):
     balance = initial_balance
     pos = 0
+
+    kelly_pnls = np.empty(KELLY_N, dtype=np.float64)
+    kelly_count = 0
+
     # SBER = a * SBERP + b
     # d(SBER) = a * d(SBERP)
     # SPREAD = SBER - a * SBERP - b
@@ -97,7 +102,16 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
         if pos == 0:
             if z_score > z_entry:
                 pos = 1
-                total_pos_size = balance * RISK_PCT / 100
+
+                if kelly_count >= KELLY_N:
+                    mean_pnl = np.mean(kelly_pnls)
+                    var_pnl = np.var(kelly_pnls)
+                    kelly = mean_pnl/var_pnl
+                    kelly = max(0.0, min(1.0, kelly))
+                    total_pos_size = balance * kelly
+                else:
+                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -111,7 +125,14 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
             elif z_score < -z_entry:
                 pos = -1
 
-                total_pos_size = balance * RISK_PCT / 100
+                if kelly_count >= KELLY_N:
+                    mean_pnl = np.mean(kelly_pnls)
+                    var_pnl = np.var(kelly_pnls)
+                    kelly = mean_pnl / var_pnl
+                    kelly = max(0.0, min(1.0, kelly))
+                    total_pos_size = balance * kelly
+                else:
+                    total_pos_size = balance * INITIAL_POS_SIZE / 100
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -127,9 +148,13 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                 short_pnl = (sber_entry_price - sber_price) * sber_quantity
                 total_fee = FEE * (sber_quantity * sber_price + sberp_quantity * sberp_price) * 2
                 total_pnl = long_pnl + short_pnl - total_fee
+
                 if total_pnl < -entry_balance * sl_pct / 100 or z_score <= z_exit:
                     balance += total_pnl
                     pos = 0
+
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_count += 1
 
             elif pos == -1:
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
@@ -139,6 +164,9 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                 if total_pnl < -entry_balance * sl_pct / 100 or z_score >= -z_exit:
                     balance += total_pnl
                     pos = 0
+
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_count += 1
 
 
     return (balance - initial_balance)/initial_balance * 100
@@ -151,6 +179,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
     holding_times = []
     paid_fees = 0
 
+    kelly_pnls = np.empty(KELLY_N, dtype=np.float64)
+    kelly_count = 0
+
     for i in range(len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
@@ -161,7 +192,16 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
         if pos == 0:
             if z_score > z_entry:
                 pos = 1
-                total_pos_size = balance * RISK_PCT / 100
+
+                if kelly_count >= KELLY_N:
+                    mean_pnl = np.mean(kelly_pnls)
+                    var_pnl = np.var(kelly_pnls)
+                    kelly = mean_pnl / var_pnl
+                    kelly = max(0.0, min(1.0, kelly))
+                    total_pos_size = balance * kelly
+                else:
+                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -178,7 +218,15 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
             elif z_score < -z_entry:
                 pos = -1
 
-                total_pos_size = balance * RISK_PCT / 100
+                if kelly_count >= KELLY_N:
+                    mean_pnl = np.mean(kelly_pnls)
+                    var_pnl = np.var(kelly_pnls)
+                    kelly = mean_pnl / var_pnl
+                    kelly = max(0.0, min(1.0, kelly))
+                    total_pos_size = balance * kelly
+                else:
+                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -204,6 +252,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                     holding_times.append(time - entry_time)
                     pos = 0
 
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_count += 1
+
             elif pos == -1:
                 long_pnl = (sber_price - sber_entry_price) * sber_quantity
                 short_pnl = (sberp_entry_price - sberp_price) * sberp_quantity
@@ -216,6 +267,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                     pnls.append(long_pnl + short_pnl)
                     holding_times.append(time - entry_time)
                     pos = 0
+
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_count += 1
 
         equity_curve.append(balance)
 
