@@ -15,8 +15,9 @@ optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study lo
 STARTING_BALANCE = 100000
 INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
 KELLY_N = 50          # window for Kelly criterion
+ZERO_KELLY = 0.25     # Kelly when var = 0.0 and pnls are positive
 FEE = 0.008/100
-SINCE = "01-01-2025" #None to use all the data
+SINCE = "01-01-2024" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
 N_TRIALS = 100    #optuna study trials
 N_TRAIN_MONTHS = 6
@@ -24,6 +25,25 @@ N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
 OPTUNA_VISUALIZE = True
 
+
+def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
+    if kelly_count >= KELLY_N:
+        mean_pnl = np.mean(kelly_pnls)
+        var_pnl = np.var(kelly_pnls)
+        if var_pnl != 0.0:
+            kelly = mean_pnl / var_pnl
+            print(kelly)
+            kelly = max(0.0, min(1.0, kelly))
+        else:
+            if mean_pnl > 0:
+                kelly = ZERO_KELLY
+            else:
+                kelly = INITIAL_POS_SIZE / 100
+        total_pos_size = balance * kelly
+    else:
+        total_pos_size = balance * INITIAL_POS_SIZE / 100
+
+    return total_pos_size
 
 def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
     returns = equity.pct_change().dropna()
@@ -103,14 +123,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
             if z_score > z_entry:
                 pos = 1
 
-                if kelly_count >= KELLY_N:
-                    mean_pnl = np.mean(kelly_pnls)
-                    var_pnl = np.var(kelly_pnls)
-                    kelly = mean_pnl/var_pnl
-                    kelly = max(0.0, min(1.0, kelly))
-                    total_pos_size = balance * kelly
-                else:
-                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+                total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
 
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
@@ -125,14 +138,8 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
             elif z_score < -z_entry:
                 pos = -1
 
-                if kelly_count >= KELLY_N:
-                    mean_pnl = np.mean(kelly_pnls)
-                    var_pnl = np.var(kelly_pnls)
-                    kelly = mean_pnl / var_pnl
-                    kelly = max(0.0, min(1.0, kelly))
-                    total_pos_size = balance * kelly
-                else:
-                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+                total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
+
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -153,7 +160,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                     balance += total_pnl
                     pos = 0
 
-                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl / entry_balance
                     kelly_count += 1
 
             elif pos == -1:
@@ -165,7 +172,7 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
                     balance += total_pnl
                     pos = 0
 
-                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl / entry_balance
                     kelly_count += 1
 
 
@@ -193,14 +200,9 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
             if z_score > z_entry:
                 pos = 1
 
-                if kelly_count >= KELLY_N:
-                    mean_pnl = np.mean(kelly_pnls)
-                    var_pnl = np.var(kelly_pnls)
-                    kelly = mean_pnl / var_pnl
-                    kelly = max(0.0, min(1.0, kelly))
-                    total_pos_size = balance * kelly
-                else:
-                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+                total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
+
+                print(total_pos_size)
 
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
@@ -218,14 +220,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
             elif z_score < -z_entry:
                 pos = -1
 
-                if kelly_count >= KELLY_N:
-                    mean_pnl = np.mean(kelly_pnls)
-                    var_pnl = np.var(kelly_pnls)
-                    kelly = mean_pnl / var_pnl
-                    kelly = max(0.0, min(1.0, kelly))
-                    total_pos_size = balance * kelly
-                else:
-                    total_pos_size = balance * INITIAL_POS_SIZE / 100
+                total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
 
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
@@ -252,7 +247,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                     holding_times.append(time - entry_time)
                     pos = 0
 
-                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl / entry_balance
                     kelly_count += 1
 
             elif pos == -1:
@@ -268,7 +263,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                     holding_times.append(time - entry_time)
                     pos = 0
 
-                    kelly_pnls[kelly_count % KELLY_N] = total_pnl
+                    kelly_pnls[kelly_count % KELLY_N] = total_pnl / entry_balance
                     kelly_count += 1
 
         equity_curve.append(balance)
