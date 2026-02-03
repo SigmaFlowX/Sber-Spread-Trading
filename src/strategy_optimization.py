@@ -219,7 +219,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     winning_trades = sum(1 for x in pnls if x > 0)
     win_ratio = winning_trades/total_trades
 
-    equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
+    equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps[:len(equity_curve)]))
 
     if plot:
         plt.figure(figsize=(12, 5))

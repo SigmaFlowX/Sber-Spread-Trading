@@ -10,21 +10,21 @@ from datetime import timedelta
 import numpy as np
 from optuna.visualization import plot_optimization_history
 
-optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
+#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
 INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
 KELLY_N = 50          # window for Kelly criterion
 ZERO_KELLY = 0.25    # Kelly when var = 0.0 and pnls are positive
-MAX_KELLY = 0.25     # A boundary for some sanity
+MAX_KELLY = 0.5    # A boundary for some sanity
 FEE = 0.008/100
 SINCE = "01-01-2024" #None to use all the data
-TIMEFRAME = 10  #1 or 10 (min)
+TIMEFRAME = 1  #1 or 10 (min)
 N_TRIALS = 100    #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
-OPTUNA_VISUALIZE = False
+OPTUNA_VISUALIZE = True
 
 @njit(cache=True)
 def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
@@ -196,7 +196,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
-        z_score = z_score_arr[i-1]
+        z_score = z_score_arr[i-1] # no look-ahead bias
         time = timestamps[i]
 
         if pos == 0:
@@ -278,7 +278,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
     avg_pnl = sum(pnls)/len(pnls)
     winning_trades = sum(1 for x in pnls if x > 0)
     win_ratio = winning_trades/total_trades
-    equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
+    equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps[:len(equity_curve)]))
 
     if plot:
         plt.figure(figsize=(12, 5))
@@ -296,8 +296,8 @@ def objective(trial, df):
     z_entry = trial.suggest_float('z_entry', 0.0,5)
     z_exit = trial.suggest_float('z_exit', 0.0, z_entry)
     sl_pct = trial.suggest_float('sl_pct', 1,50)
-    z_window = trial.suggest_int('z_window', 5,1000, log=True)
-    spread_window = trial.suggest_int('spread_window', 10,1000, log=True)
+    z_window = trial.suggest_int('z_window', 5,10000, log=True)
+    spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
 
     sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
