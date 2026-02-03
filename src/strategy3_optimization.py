@@ -10,13 +10,13 @@ from datetime import timedelta
 import numpy as np
 from optuna.visualization import plot_optimization_history
 
-optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
+#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
 INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
 KELLY_N = 50          # window for Kelly criterion
-ZERO_KELLY = 0.25     # Kelly when var = 0.0 and pnls are positive
-MAX_KELLY = 0.5       # Mathematically Kelly can be greater than 1
+ZERO_KELLY = 0.25    # Kelly when var = 0.0 and pnls are positive
+MAX_KELLY = 0.25     # A boundary for some sanity
 FEE = 0.008/100
 SINCE = "01-01-2024" #None to use all the data
 TIMEFRAME = 10  #1 or 10 (min)
@@ -26,7 +26,7 @@ N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
 OPTUNA_VISUALIZE = False
 
-@njit()
+@njit(cache=True)
 def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
     if kelly_count >= KELLY_N:
         mean_pnl = np.mean(kelly_pnls)
@@ -185,7 +185,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
     equity_curve = []
     holding_times = []
     paid_fees = 0
-
     kelly_pnls = np.empty(KELLY_N, dtype=np.float64)
     kelly_count = 0
 
@@ -201,7 +200,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = 1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
-                print(total_pos_size)
 
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
@@ -220,7 +218,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = -1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
-                print(total_pos_size)
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
@@ -278,7 +275,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
     avg_pnl = sum(pnls)/len(pnls)
     winning_trades = sum(1 for x in pnls if x > 0)
     win_ratio = winning_trades/total_trades
-
     equity_series = pd.Series(equity_curve, index=pd.to_datetime(timestamps))
 
     if plot:
