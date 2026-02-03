@@ -6,3 +6,5 @@ requests
 statsmodels
 numba
 scikit-learn
+pykalman
+plotly
