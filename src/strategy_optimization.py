@@ -88,11 +88,11 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr,z_score_arr, a_arr, z_thre
     # SPREAD = SBER - a * SBERP - b
     # z > 0 - short a * SBER, long SBERP
     # z < 0 - long a * SBER, short SBERP
-    for i in range(len(sberp_price_arr)):
+    for i in range(1, len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
-        z_score = z_score_arr[i]
+        z_score = z_score_arr[i-1]
 
         if pos == 0:
             if z_score > z_threshold:
@@ -144,11 +144,11 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_th
     holding_times = []
     paid_fees = 0
 
-    for i in range(len(sberp_price_arr)):
+    for i in range(1, len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
-        z_score = z_score_arr[i]
+        z_score = z_score_arr[i-1]
         time = timestamps[i]
 
         if pos == 0:
