@@ -117,11 +117,11 @@ def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_ent
     # SPREAD = SBER - a * SBERP - b
     # z > 0 - short a * SBER, long SBERP
     # z < 0 - long a * SBER, short SBERP
-    for i in range(len(sberp_price_arr)):
+    for i in range(1, len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
-        z_score = z_score_arr[i]
+        z_score = z_score_arr[i-1]
 
         if pos == 0:
             if z_score > z_entry:
@@ -192,11 +192,11 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
     kelly_pnls = np.empty(KELLY_N, dtype=np.float64)
     kelly_count = 0
 
-    for i in range(len(sberp_price_arr)):
+    for i in range(1, len(sberp_price_arr)):
         sber_price = sber_price_arr[i]
         sberp_price = sberp_price_arr[i]
         a = a_arr[i]
-        z_score = z_score_arr[i]
+        z_score = z_score_arr[i-1]
         time = timestamps[i]
 
         if pos == 0:
@@ -204,7 +204,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = 1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
-                print(total_pos_size)
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -222,7 +221,6 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = -1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
-                print(total_pos_size)
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
