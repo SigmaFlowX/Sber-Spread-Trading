@@ -24,16 +24,20 @@ RISK_PCT = 10
 OPTUNA_VISUALIZE = True
 
 
-def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
+def performance_metrics(equity, risk_free_rate=0):
     returns = equity.pct_change().dropna()
 
     total_return = equity.iloc[-1] / equity.iloc[0]
     n_years = (equity.index[-1] - equity.index[0]).days / 365
     ann_return = total_return ** (1 / n_years) - 1
 
-    rf_period = risk_free_rate / periods_per_year
+    trading_hours = 8.75
+    bars_per_day = (trading_hours * 60) / TIMEFRAME
+    bars_per_year = 252 * bars_per_day
+
+    rf_period = risk_free_rate / bars_per_year
     excess_returns = returns - rf_period
-    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(periods_per_year)
+    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(bars_per_year)
 
     return ann_return, sharpe
 
