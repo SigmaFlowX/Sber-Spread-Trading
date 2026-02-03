@@ -10,7 +10,7 @@ from datetime import timedelta
 import numpy as np
 from optuna.visualization import plot_optimization_history
 
-#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
+optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
 INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
@@ -45,16 +45,20 @@ def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
 
     return total_pos_size
 
-def performance_metrics(equity, periods_per_year=252, risk_free_rate=0):
+def performance_metrics(equity, risk_free_rate=0):
     returns = equity.pct_change().dropna()
 
     total_return = equity.iloc[-1] / equity.iloc[0]
     n_years = (equity.index[-1] - equity.index[0]).days / 365
     ann_return = total_return ** (1 / n_years) - 1
 
-    rf_period = risk_free_rate / periods_per_year
+    trading_hours = 8.75
+    bars_per_day = (trading_hours * 60) / TIMEFRAME
+    bars_per_year = 252 * bars_per_day
+
+    rf_period = risk_free_rate / bars_per_year
     excess_returns = returns - rf_period
-    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(periods_per_year)
+    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(bars_per_year)
 
     return ann_return, sharpe
 
@@ -200,7 +204,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = 1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
-
+                print(total_pos_size)
                 sber_pos_size = a/(a+1) * total_pos_size
                 sberp_pos_size = total_pos_size/(a+1)
 
@@ -218,6 +222,7 @@ def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_en
                 pos = -1
 
                 total_pos_size = calculate_total_pos_size(kelly_count, kelly_pnls, balance)
+                print(total_pos_size)
                 sber_pos_size = a / (a + 1) * total_pos_size
                 sberp_pos_size = total_pos_size / (a + 1)
 
