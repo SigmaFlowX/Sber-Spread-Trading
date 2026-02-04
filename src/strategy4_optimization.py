@@ -197,7 +197,7 @@ def test_strategy_slow(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_ope
     kelly_pnls = np.empty(KELLY_N, dtype=np.float64)
     kelly_count = 0
 
-    for i in range(0, len(sberp_price_arr)-1):
+    for i in range(0, len(sberp_close_arr)-1):
         sber_price = sber_open_arr[i+1]
         sberp_price = sberp_open_arr[i+1]
         a = a_arr[i]
