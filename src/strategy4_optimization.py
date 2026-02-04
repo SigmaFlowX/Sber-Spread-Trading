@@ -69,8 +69,8 @@ def open_data(timeframe, since=None):
     df_sber = pd.read_csv(os.path.join(data_dir, f"SBER{timeframe}min.csv"), parse_dates=["timestamp"], index_col="timestamp")
     df_sberp = pd.read_csv(os.path.join(data_dir, f"SBERP{timeframe}min.csv"),parse_dates=["timestamp"], index_col="timestamp")
 
-    df_sber = df_sber[['close']].copy()
-    df_sberp = df_sberp[['close']].copy()
+    df_sber = df_sber[['close'], ['open']].copy()
+    df_sberp = df_sberp[['close'], ['open']].copy()
 
     df_sber.rename(columns={'close': 'SBER'}, inplace=True)
     df_sberp.rename(columns={'close': 'SBERP'}, inplace=True)
