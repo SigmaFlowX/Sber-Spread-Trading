@@ -201,7 +201,7 @@ def test_strategy_slow(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_ope
         sber_price = sber_open_arr[i+1]
         sberp_price = sberp_open_arr[i+1]
         a = a_arr[i]
-        z_score = z_score_arr[i-1] # no look-ahead bias
+        z_score = z_score_arr[i] # no look-ahead bias
         time = timestamps[i]
 
         if pos == 0:
