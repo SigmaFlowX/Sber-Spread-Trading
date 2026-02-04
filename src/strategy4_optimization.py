@@ -374,8 +374,10 @@ if __name__ == "__main__":
             annualized_return,
             paid_fees,
         ) = test_strategy_slow(
-            sber_price_arr,
-            sberp_price_arr,
+            sber_close,
+            sberp_close,
+            sber_open,
+            sberp_open,
             z_score_arr,
             a_arr,
             z_entry,
