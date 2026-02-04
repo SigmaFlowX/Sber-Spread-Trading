@@ -187,7 +187,7 @@ def run_strategy_fast(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_open
 
     return (balance - initial_balance)/initial_balance * 100
 
-def test_strategy_slow(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, timestamps, initial_balance=100000,plot=False):
+def test_strategy_slow(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_open_arr,  z_score_arr, a_arr, z_entry, z_exit, sl_pct, timestamps, initial_balance=100000,plot=False):
     balance = initial_balance
     pos = 0
     pnls = []
