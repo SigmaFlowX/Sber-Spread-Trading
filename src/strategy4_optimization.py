@@ -357,8 +357,8 @@ if __name__ == "__main__":
         spread_window = best_params['spread_window']
         z_window = best_params['z_window']
 
-        sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
-        timestamps = test_df.index[-len(sberp_price_arr):]
+        sber_close, sberp_close, sber_open, sberp_open, z_score_arr, a_arr = prepare_data_arrays(test_df, z_window, spread_window)
+        timestamps = test_df.index[-len(sberp_close):]
 
         (
             final_balance,
