@@ -126,7 +126,7 @@ def run_strategy_fast(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_open
         sber_price = sber_open_arr[i+1]   #i close is used to calculated z_score, the next available price is i+1 open
         sberp_price = sberp_open_arr[i+1]
         a = a_arr[i]
-        z_score = z_score_arr[i-1]
+        z_score = z_score_arr[i]
 
         if pos == 0:
             if z_score > z_entry:
