@@ -102,7 +102,12 @@ def prepare_data_arrays(df, z_window, spread_window):
 
     df = df.dropna()
 
-    return df['SBER'].values, df['SBERP'].values, df['z_score'].values, df['a'].values
+    return (df['SBER_close'].values,
+            df['SBERP_close'].values,
+            df['SBER_open'].values,
+            df['SBERP_open'].values,
+            df['z_score'].values,
+            df['a'].values)
 
 @njit(cache=True)
 def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, initial_balance=100000):
