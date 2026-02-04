@@ -28,7 +28,9 @@ Version 1 (strategy_optimization.py) is the most basic and only has 3 hyperparam
 
 Version 2 has 5 hyperramaters and still a fixed allocation for trades. 
 
-Version 3 uses Kelly criterion to calculate position sizes. 
+Version 3 uses Kelly criterion to calculate position sizes.
+
+Version 4: look-ahead bias is fixed. Since this moment versions 1,2,3 are no longer getting updates and their performance is not realistic. 
 
 **Important:** All three versions used to have a slight look-ahead bias that was fixed only roughly and will be fixed thoroughly in version 4. 
 
@@ -50,6 +52,10 @@ Slippage is also not included in the backtest.
 **Update**:<br> in version 3 position size is now calculated using Kelly criterion so the balance problem is solved for now. Also Sharp ratio has been fixed in all versions. <br>
 However, I have found a possible look-ahead bias in all of the versions and have fixed it roughly. So the perforamnce of all the versions is likely to be underestimeated. <br>
 It will be fixed in the 4th version and all the previous versions will probably be retired completely. 
+
+**Update2** <br> With version 4 all the major problems seem to have benn solved. However, the code is pretty slow and I have a couple ideas how to speed it up: <br>
+1) Get rid of statmodels OLS and write a custom analogue using numpy and optuna
+2) Alternatively use Kalman filter instead of rolling OLS
 
 
 # Walk-Forward Optimization Results (outdated)
@@ -119,6 +125,7 @@ Sharpe ratio is 0.2
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
