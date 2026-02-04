@@ -304,7 +304,7 @@ def objective(trial, df):
     z_window = trial.suggest_int('z_window', 5,10000, log=True)
     spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
 
-    sber_price_arr, sberp_price_arr, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
+    sber_close, sberp_close,sber_open, sberp_open, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
     return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, STARTING_BALANCE)
 
