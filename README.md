@@ -21,6 +21,19 @@ z >= z_exit <br>
 Walk forward optimization is performed using optuna. <br>
 Fees and included in the model, but not the slippage.
 
+# Difference in all the code versions
+As for now all new versions inherit features from previous ones with some added functionality. 
+
+Version 1 (strategy_optimization.py) is the most basic and only has 3 hyperparameters to optimizes and fixed allocation for eatch trade. 
+
+Version 2 has 5 hyperramaters and still a fixed allocation for trades. 
+
+Version 3 uses Kelly criterion to calculate position sizes. 
+
+**Important:** All three versions used to have a slight look-ahead bias that was fixed only roughly and will be fixed thoroughly in version 4. 
+
+
+
 # Preliminary results and what shall be improved 
 Strategy seems to be profitable and stable enough for furher research, but a lot of things are yet to be reworked. 
 
@@ -34,6 +47,9 @@ Sharpe ratio estimation is as well may not be realistic as returns are now only 
 
 Slippage is also not included in the backtest. 
 
+**Update**:<br> in version 3 position size is now calculated using Kelly criterion so the balance problem is solved for now. Also Sharp ratio has been fixed in all versions. <br>
+However, I have found a possible look-ahead bias in all of the versions and have fixed it roughly. So the perforamnce of all the versions is likely to be underestimeated. <br>
+It will be fixed in the 4th version and all the previous versions will probably be retired completely. 
 
 
 # Walk-Forward Optimization Results (outdated)
@@ -103,6 +119,7 @@ Sharpe ratio is 0.2
 SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
 
 SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
+
 
 
 
