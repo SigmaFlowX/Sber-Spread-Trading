@@ -94,7 +94,7 @@ def prepare_data_arrays(df, z_window, spread_window):
     params = rres.params
     df['a'] = params['SBERP_close']
     df['b'] = params['const']
-    df['spread'] = y - (df['a'] * df['SBERP'] + df['b'])
+    df['spread'] = y - (df['a'] * df['SBERP_close'] + df['b'])
 
     df['spread_mean'] = df['spread'].rolling(z_window).mean()
     df['spread_std'] = df['spread'].rolling(z_window).std()
