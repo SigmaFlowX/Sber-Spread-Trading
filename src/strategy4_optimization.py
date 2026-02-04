@@ -110,7 +110,7 @@ def prepare_data_arrays(df, z_window, spread_window):
             df['a'].values)
 
 @njit(cache=True)
-def run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, initial_balance=100000):
+def run_strategy_fast(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_open_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, initial_balance=100000):
     balance = initial_balance
     pos = 0
 
