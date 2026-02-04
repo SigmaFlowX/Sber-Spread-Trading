@@ -72,8 +72,8 @@ def open_data(timeframe, since=None):
     df_sber = df_sber[['close'], ['open']].copy()
     df_sberp = df_sberp[['close'], ['open']].copy()
 
-    df_sber.rename(columns={'close': 'SBER'}, inplace=True)
-    df_sberp.rename(columns={'close': 'SBERP'}, inplace=True)
+    df_sber.rename(columns={'close': 'SBER_close', 'open':'SBER_open'}, inplace=True)
+    df_sberp.rename(columns={'close': 'SBERP_close', 'open': 'SBERP_open'}, inplace=True)
 
     df = pd.concat([df_sber, df_sberp], axis=1).dropna()
 
