@@ -306,7 +306,7 @@ def objective(trial, df):
 
     sber_close, sberp_close,sber_open, sberp_open, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
-    return run_strategy_fast(sber_price_arr, sberp_price_arr, z_score_arr, a_arr, z_entry, z_exit, sl_pct, STARTING_BALANCE)
+    return run_strategy_fast(sber_close, sberp_close, sber_open, sberp_open, z_score_arr, a_arr, z_entry, z_exit, sl_pct, STARTING_BALANCE)
 
 def generate_walkforward_windows(df, train_months=6, test_months=3):
     windows = []
