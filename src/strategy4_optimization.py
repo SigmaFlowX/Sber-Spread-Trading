@@ -122,9 +122,9 @@ def run_strategy_fast(sber_close_arr, sberp_close_arr, sber_open_arr, sberp_open
     # SPREAD = SBER - a * SBERP - b
     # z > 0 - short a * SBER, long SBERP
     # z < 0 - long a * SBER, short SBERP
-    for i in range(1, len(sberp_price_arr)):
-        sber_price = sber_price_arr[i]
-        sberp_price = sberp_price_arr[i]
+    for i in range(0, len(sberp_price_arr)):
+        sber_price = sber_open_arr[i+1]   #i close is used to calculated z_score, the next available price is i+1 open
+        sberp_price = sberp_open_arr[i+1]
         a = a_arr[i]
         z_score = z_score_arr[i-1]
 
