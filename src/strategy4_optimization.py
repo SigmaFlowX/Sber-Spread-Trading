@@ -85,8 +85,8 @@ def open_data(timeframe, since=None):
 def prepare_data_arrays(df, z_window, spread_window):
     df = df.copy()
 
-    y = df['SBER']
-    X = sm.add_constant(df['SBERP'])
+    y = df['SBER_close']
+    X = sm.add_constant(df['SBERP_close'])
 
     rols = RollingOLS(y, X, window=spread_window)
     rres = rols.fit()
