@@ -92,7 +92,7 @@ def prepare_data_arrays(df, z_window, spread_window):
     rres = rols.fit()
 
     params = rres.params
-    df['a'] = params['SBERP']
+    df['a'] = params['SBERP_close']
     df['b'] = params['const']
     df['spread'] = y - (df['a'] * df['SBERP'] + df['b'])
 
