@@ -10,21 +10,21 @@ from datetime import timedelta
 import numpy as np
 from optuna.visualization import plot_optimization_history
 
-#optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
+optuna.logging.set_verbosity(optuna.logging.CRITICAL)   #to hide optuna study logs
 
 STARTING_BALANCE = 100000
-INITIAL_POS_SIZE = 10 #%  before there are enough trades to use Kelly criterion
+INITIAL_POS_SIZE = 25 #%  before there are enough trades to use Kelly criterion
 KELLY_N = 50          # window for Kelly criterion
-ZERO_KELLY = 0.25    # Kelly when var = 0.0 and pnls are positive
-MAX_KELLY = 0.5    # A boundary for some sanity
+ZERO_KELLY = 0.5   # Kelly when var = 0.0 and pnls are positive
+MAX_KELLY = 1    # A boundary for some sanity
 FEE = 0.008/100
-SINCE = "01-01-2024" #None to use all the data
+SINCE = "01-01-2023" #None to use all the data
 TIMEFRAME = 1  #1 or 10 (min)
-N_TRIALS = 100    #optuna study trials
+N_TRIALS = 32    #optuna study trials
 N_TRAIN_MONTHS = 6
 N_TEST_MONTHS = 3
 PLOT_EQUITIES = False
-OPTUNA_VISUALIZE = True
+OPTUNA_VISUALIZE = False
 
 @njit(cache=True)
 def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
@@ -45,20 +45,17 @@ def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
 
     return total_pos_size
 
-def performance_metrics(equity, risk_free_rate=0):
-    returns = equity.pct_change().dropna()
+def performance_metrics(equity, risk_free_rate=0.0):
+    daily_equity = equity.resample('D').last().dropna()
+    daily_returns = daily_equity.pct_change().dropna()
 
     total_return = equity.iloc[-1] / equity.iloc[0]
     n_years = (equity.index[-1] - equity.index[0]).days / 365
     ann_return = total_return ** (1 / n_years) - 1
 
-    trading_hours = 8.75
-    bars_per_day = (trading_hours * 60) / TIMEFRAME
-    bars_per_year = 252 * bars_per_day
-
-    rf_period = risk_free_rate / bars_per_year
-    excess_returns = returns - rf_period
-    sharpe = (excess_returns.mean() / excess_returns.std()) * np.sqrt(bars_per_year)
+    rf_daily = risk_free_rate / 252
+    excess_daily = daily_returns - rf_daily
+    sharpe = (excess_daily.mean() / excess_daily.std()) * np.sqrt(252)
 
     return ann_return, sharpe
 
@@ -301,8 +298,8 @@ def objective(trial, df):
     z_entry = trial.suggest_float('z_entry', 0.0,5)
     z_exit = trial.suggest_float('z_exit', 0.0, z_entry)
     sl_pct = trial.suggest_float('sl_pct', 1,50)
-    z_window = trial.suggest_int('z_window', 5,10000, log=True)
-    spread_window = trial.suggest_int('spread_window', 10,10000, log=True)
+    z_window = trial.suggest_int('z_window', 100, 200, log=True)
+    spread_window = trial.suggest_int('spread_window', 800,1200, log=True)
 
     sber_close, sberp_close,sber_open, sberp_open, z_score_arr, a_arr = prepare_data_arrays(df, z_window, spread_window)
 
@@ -344,7 +341,7 @@ if __name__ == "__main__":
         test_df = df.loc[test_start:test_end].copy()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=8)
+        study.optimize(lambda trial: objective(trial, train_df), n_trials=N_TRIALS, n_jobs=-1)
 
         if OPTUNA_VISUALIZE:
             fig = plot_optimization_history(study)
