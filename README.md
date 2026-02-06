@@ -65,13 +65,12 @@ With fee rates available to a retail trader the strategy performs poorly and def
 1) Having two seperate backtest functions where one is used to maximize execution speed while optimizing parameters and another for out of sample tests seemed like a great idea in the beginning, but quickly turned into a nightmare because of all the duplicate lines of code. I am never again using this approach.
 2) Slippage was not modeled at all, but it obviously would only make a strategy worse.
 3) Overall optimization speed is really bad and the bottle neck here is rolling OLS from statmodels. Rewriting it only using numpy would probably speed up things.
-4) In future projects I will try to avoid using cycles with price series and instead use vectored calculations. 
+4) In future projects I will try to avoid using cycles with price series and instead use vectored calculations.
+5) It would be also interesting to use Kalman filter instead of rolling OLS. 
 
-## Data links
+## Data link
+https://drive.google.com/drive/folders/1xzjAMPlM7wVLiC6kKs2LmQLJY_RqKXiN?usp=sharing
 
-SBER<br>https://drive.google.com/file/d/1HjTwX0ZIwoqtYKKdl5y3fG3rUgcYqZiT/view?usp=sharing
-
-SBERP<br>https://drive.google.com/file/d/1h9tjGM8Yg-Q_uYlmIJrtxOePQApaBU4L/view?usp=sharing
 
 
 
