@@ -1,4 +1,4 @@
-from strategy2_optimization import open_data
+from src.strategy_optimization import open_data
 import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
