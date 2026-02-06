@@ -33,7 +33,7 @@ def calculate_total_pos_size(kelly_count, kelly_pnls, balance):
         var_pnl = np.var(kelly_pnls)
         if var_pnl != 0.0:
             kelly = mean_pnl / var_pnl
-            kelly = max(0.0, min(MAX_KELLY, kelly))
+            kelly = max(0.1, min(MAX_KELLY, kelly))
         else:
             if mean_pnl > 0:
                 kelly = ZERO_KELLY
